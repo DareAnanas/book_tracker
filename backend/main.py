@@ -1,7 +1,11 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
+
+class Book(BaseModel):
+    test: str
 
 app = FastAPI()
 
-@app.get('/')
-async def root():
-    return {'message': 'Hello World'}
+@app.post('/books')
+async def add_book(book: Book):
+    return book
