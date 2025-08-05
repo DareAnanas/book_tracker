@@ -1,12 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from sqlalchemy import create_engine, text
+import psycopg2
+from psycopg2.pool import SimpleConnectionPool
+import time
 
-engine = create_engine('postgresql+psycopg2://danylo:6432@localhost/book_tracker')
-
-with engine.connect() as conn:
-    result = conn.execute(text("select 'hello world'"))
-    print(result.all())
+pool = SimpleConnectionPool(minconn=1, maxconn=10, dsn='dbname=book_tracker user=danylo')
 
 class Book(BaseModel):
     title: str
@@ -21,5 +19,17 @@ app = FastAPI()
 
 @app.post('/books')
 async def add_book(book: Book):
-
+    start = time.time()
+    conn = pool.getconn()
+    duration = time.time() - start
+    print(duration)
+    pid = conn.get_backend_pid()
+    print(f"Connection PID: {pid}")
+    # cur = conn.cursor()
+    # cur.execute("select 'hello world'")
+    # print(cur.fetchone())
+    # conn.commit()
+    # cur.close()
+    # conn.close()
+    # pool.putconn(conn)
     return book
