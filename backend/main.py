@@ -19,17 +19,11 @@ app = FastAPI()
 
 @app.post('/books')
 async def add_book(book: Book):
-    start = time.time()
     conn = pool.getconn()
-    duration = time.time() - start
-    print(duration)
-    pid = conn.get_backend_pid()
-    print(f"Connection PID: {pid}")
-    # cur = conn.cursor()
-    # cur.execute("select 'hello world'")
-    # print(cur.fetchone())
-    # conn.commit()
-    # cur.close()
-    # conn.close()
-    # pool.putconn(conn)
+    cur = conn.cursor()
+    cur.execute("select 'hello world'")
+    print(cur.fetchone())
+    conn.commit()
+    cur.close()
+    pool.putconn(conn)
     return book
