@@ -21,8 +21,20 @@ app = FastAPI()
 async def add_book(book: Book):
     conn = pool.getconn()
     cur = conn.cursor()
-    cur.execute("select 'hello world'")
-    print(cur.fetchone())
+    cur.execute("""
+                insert into books (title, author, year, genre, rating, date_read, comment) 
+                values (%(title)s, %(author)s, %(year)s, %(genre)s, %(rating)s, %(date_read)s, %(comment)s);
+                """,
+                {
+                    'title': book.title,
+                    'author': book.author,
+                    'year': book.year,
+                    'genre': book.genre,
+                    'rating': book.rating,
+                    'date_read': book.date_read,
+                    'comment': book.comment
+                }
+                )
     conn.commit()
     cur.close()
     pool.putconn(conn)
