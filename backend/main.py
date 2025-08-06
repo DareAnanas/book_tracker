@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.pool import SimpleConnectionPool
+from psycopg2.sql import SQL, Identifier
 import time
 
 pool = SimpleConnectionPool(minconn=1, maxconn=10, dsn='dbname=book_tracker user=danylo')
@@ -21,20 +22,29 @@ app = FastAPI()
 async def add_book(book: Book):
     conn = pool.getconn()
     cur = conn.cursor()
-    cur.execute("""
-                insert into books (title, author, year, genre, rating, date_read, comment) 
-                values (%(title)s, %(author)s, %(year)s, %(genre)s, %(rating)s, %(date_read)s, %(comment)s);
-                """,
-                {
-                    'title': book.title,
-                    'author': book.author,
-                    'year': book.year,
-                    'genre': book.genre,
-                    'rating': book.rating,
-                    'date_read': book.date_read,
-                    'comment': book.comment
-                }
+    fields = tuple(book.dict().keys())
+    values = tuple(book.dict().values())
+    cur.execute(SQL("""
+                insert into books {}
+                values (%s, %s, %s, %s, %s, %s, %s);
+                """).format(Identifier(*fields)),
+                values
                 )
+    # cur.execute("""
+    #             insert into books (title, author, year, genre, rating, date_read, comment) 
+    #             values (%(title)s, %(author)s, %(year)s, %(genre)s, %(rating)s, %(date_read)s, %(comment)s);
+    #             """,
+    #             {
+    #                 'title': book.title,
+    #                 'author': book.author,
+    #                 'year': book.year,
+    #                 'genre': book.genre,
+    #                 'rating': book.rating,
+    #                 'date_read': book.date_read,
+    #                 'comment': book.comment,
+    #             }
+    #             )
+    print()
     conn.commit()
     cur.close()
     pool.putconn(conn)
