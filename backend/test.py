@@ -6,4 +6,6 @@ class Test(BaseModel):
 
 test = Test(test='biba', test2='baraben')
 
-print(test.test2)
+test.test = 'abobobobobob'
+
+print(test.test)
