@@ -100,10 +100,20 @@ async def get_books():
 
 @app.put('/books/{id}')
 async def update_book(id: int, book: BookUpdate):
+    sql_list = []
+    values = []
+    for field, value in book.dict().items():
+        if value != None:
+            sql_list.append(SQL('{} = %s').format(Identifier(field)))
+            values.append(value)
+    if len(values) == 0:
+        return {'Update status': 'Nothing updated'}
+    snip = SQL(', ').join(sql_list)
+    values.append(id)
     conn = pool.getconn()
     cur = conn.cursor()
-    cur.execute('update books set title = %s where id = 5', ('Дюна',))
+    cur.execute(SQL('update books set {} where id = %s').format(snip), values)
     conn.commit()
     cur.close()
     pool.putconn(conn)
-    return {'a': 'biba'}
+    return {'Update status': f'{len(values) - 1} fields updated'}
