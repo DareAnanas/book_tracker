@@ -29,6 +29,36 @@ class Book(BaseModel):
     date_read: str
     comment: str
 
+class BookWithId(BaseModel):
+    id: int
+    title: str
+    author: str   
+    year: int
+    genre: str   
+    rating: int
+    date_read: str
+    comment: str
+
+class BookUpdate(BaseModel):
+    title: str | None = None
+    author: str | None = None
+    year: int | None = None
+    genre: str | None = None
+    rating: int | None = None
+    date_read: str | None = None
+    comment: str | None = None
+
+def convertToBaseModel(book: tuple) -> BookWithId:
+    field_names = list(BookWithId.__fields__.keys())
+    book_dict = {}
+    for i in range(len(book)):
+        if field_names[i] == 'date_read':
+            book_dict[field_names[i]] = book[i].strftime('%Y-%m-%d')
+            continue
+        book_dict[field_names[i]] = book[i]
+    book = BookWithId(**book_dict)
+    return book
+
 app = FastAPI()
 
 @app.post('/books')
@@ -60,9 +90,20 @@ async def add_book(book: Book):
 async def get_books():
     conn = pool.getconn()
     cur = conn.cursor()
-    cur.execute('select * from books')
-    print(cur.fetchall())
+    cur.execute('select * from books;')
+    books = cur.fetchall()
     conn.commit()
     cur.close()
     pool.putconn(conn)
-    return {'a': 'bababui'}
+    books = list(map(convertToBaseModel, books))
+    return books
+
+@app.put('/books/{id}')
+async def update_book(id: int, book: BookUpdate):
+    conn = pool.getconn()
+    cur = conn.cursor()
+    cur.execute('update books set title = %s where id = 5', ('Дюна',))
+    conn.commit()
+    cur.close()
+    pool.putconn(conn)
+    return {'a': 'biba'}
