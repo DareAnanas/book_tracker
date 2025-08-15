@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.pool import SimpleConnectionPool
@@ -61,6 +62,19 @@ def convertToBaseModel(book: tuple) -> BookWithId:
 
 app = FastAPI()
 
+origins = [
+    "http://localhost",
+    "null"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.post('/books')
 async def add_book(book: Book):
     if not (book.year >= 1 and book.year <= 9999):
@@ -116,4 +130,18 @@ async def update_book(id: int, book: BookUpdate):
     conn.commit()
     cur.close()
     pool.putconn(conn)
-    return {'Update status': f'{len(values) - 1} fields updated'}
+    return {'Update status': f'{len(values) - 1} fields updated.'}
+
+@app.delete('/books/{id}')
+async def delete_book(id: int):
+    conn = pool.getconn()
+    cur = conn.cursor()
+    cur.execute('delete from books where id = %s', (id,))
+    status = cur.statusmessage[-1]
+    conn.commit()
+    cur.close()
+    pool.putconn(conn)
+    if int(status):
+        return {'Delete status': f'Row with id {id} was deleted.'}
+    else:
+        return {'Delete status': f'Row with id {id} not found.'}
